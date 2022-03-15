@@ -21,14 +21,13 @@ object ChatService {
 
     //Получает чат по идентификатору
     fun getChatById (id: Int) : Chat? {
-        val listChat = chats.toList().filter { it.id == id}
-        return if (listChat.size == 0) null else listChat[0]
+        return chats.find { it.id == id }
     }
 
     //Удаляет чат по идентификатору
     fun deleteChat (id: Int) {
         val chat = getChatById(id)
-        if (chat != null) chats.remove(chat)
+        chats?.remove(chat)
     }
 
     //Получает список чатов
@@ -45,24 +44,22 @@ object ChatService {
 
     //Получает сообщение по идентификатору
     fun getMessageById (chat: Chat, id: Int) : Message? {
-        val listMessage = chat.messages.toList().filter { it.id == id}
-        return if (listMessage.size == 0) null else listMessage[0]
+        return chat.messages.find {  it.id == id }
     }
 
     //Удаляет сообщение по идентификатору
     fun deleteMessage (chat: Chat, id: Int) {
-        val message = getMessageById(chat, id)
-        if (message != null) {
-            chat.messages.remove(message)
+        getMessageById(chat, id).let {
+            chat.messages.remove(it)
             if (chat.messages.size == 0) chats.remove(chat)
         }
     }
 
     //Удаляет сообщение по идентификатору
     fun editMessage (chat: Chat, message: Message) {
-        val messageInList = getMessageById(chat, message.id)
-        val autorId: Int = (messageInList?.autorId ?: -1)
-        if (autorId == message.autorId) chat.messages[chat.messages.indexOf(messageInList)] = message.copy()
+        getMessageById(chat, message.id).let {
+            if (it?.id == message.autorId) chat.messages[chat.messages.indexOf(it)] = message.copy()
+        }
     }
 
     //Получает список сообщений
@@ -74,16 +71,14 @@ object ChatService {
 
     //Получает список непрочитанных чатов
     fun getUnreadChats (userId: Int) : MutableList<Chat> {
-        val result = chats.toList().filter { chat: Chat -> chat.companionId == userId && chat.messages.toList().filter{message: Message -> message.autorId != userId && message.readed == false}.size > 0 }.toMutableList()
-        result.addAll(chats.toList().filter { chat: Chat -> chat.autorId == userId && chat.messages.toList().filter{message: Message -> message.autorId != userId && message.readed == false}.size > 0 })
-
+        val result = chats.filter { chat: Chat -> chat.companionId == userId && chat.messages.any{ it.autorId != userId && it.readed == false}}.toMutableList()
+        result.addAll(chats.filter { chat: Chat -> chat.autorId == userId && chat.messages.any{it.autorId != userId && it.readed == false}})
         return result
     }
 
     //Получает количество непрочитанных чатов
     fun getUnreadChatsCount (userId: Int) : Int {
-        val unreadChats = getUnreadChats(userId)
-        return unreadChats.size
+        return getUnreadChats(userId).size
     }
 
     //Получает список сообщений по расширенным параметрам
@@ -91,7 +86,7 @@ object ChatService {
 
         val messageInList = getMessageById(chat, messageId)
         val dateFilter: Int = (messageInList?.date ?: 0)
-        val unreadedMessages = chat.messages.toList().filter{ it.autorId != userId && it.date >= dateFilter}
+        val unreadedMessages = chat.messages.filter{ it.autorId != userId && it.date >= dateFilter}
         val result = unreadedMessages.take(count)
         for (message in result) chat.messages[chat.messages.indexOf(message)] = message.copy(readed = true)
         return result.toMutableList()
