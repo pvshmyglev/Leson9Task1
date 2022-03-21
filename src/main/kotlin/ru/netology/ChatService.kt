@@ -11,9 +11,7 @@ object ChatService {
 
         val chat = Chat(chats.getMaxGuidInList(), name, autorId, companionId)
         //id устанавливаем 1 т.к. это первое сообщение в чате в принципе
-        val message = Message(1, autorId, textFirstMessage, (java.lang.System.currentTimeMillis() / 1000L).toInt())
-
-        chat.messages += message
+        chat.messages += Message(1, autorId, textFirstMessage, (java.lang.System.currentTimeMillis() / 1000L).toInt())
         chats += chat
 
         return chats.last()
@@ -26,8 +24,7 @@ object ChatService {
 
     //Удаляет чат по идентификатору
     fun deleteChat (id: Int) {
-        val chat = getChatById(id)
-        chats?.remove(chat)
+        chats?.remove(getChatById(id))
     }
 
     //Получает список чатов
@@ -37,8 +34,7 @@ object ChatService {
 
     //Создает новое сообщение
     fun addMessage (chat: Chat, autorId: Int, textMessage: String): Message {
-        val message = Message(chat.messages.getMaxGuidInList(), autorId, textMessage, (java.lang.System.currentTimeMillis() / 1000L).toInt())
-        chat.messages += message
+        chat.messages += Message(chat.messages.getMaxGuidInList(), autorId, textMessage, (java.lang.System.currentTimeMillis() / 1000L).toInt())
         return chat.messages.last()
     }
 
@@ -84,10 +80,9 @@ object ChatService {
     //Получает список сообщений по расширенным параметрам
     fun getMessagesOnFilters (chat: Chat, userId: Int, messageId: Int, count: Int = 5) : MutableList<Message> {
 
-        val messageInList = getMessageById(chat, messageId)
-        val dateFilter: Int = (messageInList?.date ?: 0)
-        val unreadedMessages = chat.messages.filter{ it.autorId != userId && it.date >= dateFilter}
-        val result = unreadedMessages.take(count)
+        val result = chat.messages
+            .filter{ it.autorId != userId && it.date >= (getMessageById(chat, messageId)?.date ?: 0)}
+            .take(count)
         for (message in result) chat.messages[chat.messages.indexOf(message)] = message.copy(readed = true)
         return result.toMutableList()
 
